@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Storm Tracker</title>
+    <style>
+        :root { --bg: #121212; --panel: #1e1e1e; --border: #333; --text: #e0e0e0; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; margin: 0; padding: 20px; }
+        
+        .main-layout { display: flex; gap: 20px; max-width: 1200px; width: 100%; }
+        
+        .controls { 
+            background: var(--panel); padding: 20px; border-radius: 12px; 
+            border: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px; width: 100%;
+        }
+
+        .canvas-area { position: relative; flex-grow: 1; }
+        canvas { background: #0a0a0a; border: 1px solid var(--border); border-radius: 8px; cursor: crosshair; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+
+        .sidebar { width: 280px; display: flex; flex-direction: column; gap: 15px; }
+        .legend, .point-list { background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        
+        .legend-item { display: flex; align-items: center; font-size: 0.8em; margin-bottom: 4px; }
+        .color-box { width: 14px; height: 14px; margin-right: 8px; border-radius: 2px; border: 1px solid rgba(255,255,255,0.2); }
+
+        label { font-size: 0.75em; text-transform: uppercase; color: #888; display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, button { width: 100%; background: #2a2a2a; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 4px; }
+        button { cursor: pointer; background: #3b82f6; border: none; font-weight: bold; transition: 0.2s; }
+        button:hover { background: #2563eb; }
+        .btn-reset { background: #ef4444; margin-top: 10px; }
+
+        .instructions { font-size: 0.8em; color: #666; grid-column: 1/-1; border-top: 1px solid var(--border); pt: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <div>
+            <label>Map Overlay</label>
+            <input type="file" id="imageLoader" accept="image/*">
+        </div>
+        <div>
+            <label>Cone Uncertainty</label>
+            <input type="range" id="coneGrowth" min="10" max="150" value="60">
+        </div>
+        <div>
+            <label>Cone Opacity</label>
+            <input type="range" id="coneOpacity" min="1" max="10" value="3">
+        </div>
+        <div>
+            <label>Cone Tint</label>
+            <input type="color" id="coneColor" value="#ffffff">
+        </div>
+        <div class="instructions">
+            <b>Interaction:</b> Click to add point | Drag to move | Right-click point to delete.
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="canvas-area">
+            <canvas id="stormCanvas" width="900" height="600"></canvas>
+        </div>
+
+        <div class="sidebar">
+            <div class="legend" id="legend">
+                <label>Storm Intensity</label>
+            </div>
+            <div class="point-list">
+                <label>Active Points</label>
+                <div id="pointControls" style="max-height: 400px; overflow-y: auto; font-size: 0.8em;"></div>
+                <button class="btn-reset" onclick="resetPoints()">Clear Track</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    const canvas = document.getElementById('stormCanvas');
+    const ctx = canvas.getContext('2d');
+    const growthSlider = document.getElementById('coneGrowth');
+    const colorPicker = document.getElementById('coneColor');
+    const opacitySlider = document.getElementById('coneOpacity');
+    const imageLoader = document.getElementById('imageLoader');
+    const pointControls = document.getElementById('pointControls');
+
+    // Official Color Scheme from User Provided Image
+    const SCHEME = [
+        { label: "Cat 5", min: 157, color: "#A188FC" },
+        { label: "Cat 4", min: 130, color: "#FF738A" },
+        { label: "Cat 3", min: 111, color: "#FF9E59" },
+        { label: "Cat 2", min: 96,  color: "#FFD98C" },
+        { label: "Cat 1", min: 74,  color: "#FFFFD9" },
+        { label: "TS",    min: 39,  color: "#4DFFFF" },
+        { label: "TD",    min: 0,   color: "#6EC1EA" },
+        { label: "Other", min: -1,  color: "#CCCCCC" }
+    ];
+
+    let points = [
+        {x: 100, y: 500, wind: 35, label: "", date: "2026-08-01", time: "08:00", showLabel: false},
+        {x: 400, y: 350, wind: 85, label: "H1", date: "2026-08-03", time: "12:00", showLabel: true},
+        {x: 800, y: 200, wind: 135, label: "H4", date: "2026-08-05", time: "18:00", showLabel: true}
+    ];
+    let draggingPoint = null;
+    let bgImage = null;
+
+    function getStormColor(wind) {
+        return SCHEME.find(s => wind >= s.min).color;
+    }
+
+    function buildLegend() {
+        const legend = document.getElementById('legend');
+        legend.innerHTML = '<label>Storm Intensity</label>';
+        SCHEME.forEach(s => {
+            if(s.min === -1) return;
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `<div class="color-box" style="background:${s.color}"></div><span>${s.label}</span>`;
+            legend.appendChild(item);
+        });
+    }
+
+    imageLoader.addEventListener('change', (e) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            bgImage = new Image();
+            bgImage.onload = () => draw();
+            bgImage.src = event.target.result;
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    });
+
+    function updatePointUI() {
+        pointControls.innerHTML = '';
+        points.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.style.marginBottom = "10px";
+            div.style.padding = "5px";
+            div.style.background = "#252525";
+            div.style.borderRadius = "4px";
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between">
+                    <b>Pt ${i+1}</b> 
+                    <input type="checkbox" ${p.showLabel ? 'checked' : ''} onchange="points[${i}].showLabel = this.checked; draw();" style="width:20px">
+                </div>
+                <input type="text" placeholder="Label" value="${p.label}" oninput="points[${i}].label = this.value; draw();">
+                <input type="date" value="${p.date}" oninput="points[${i}].date = this.value; draw();">
+                <input type="time" value="${p.time}" oninput="points[${i}].time = this.value; draw();">
+                <input type="number" value="${p.wind}" oninput="points[${i}].wind = this.value; draw();" placeholder="MPH">
+            `;
+            pointControls.appendChild(div);
+        });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (bgImage) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+
+        if (points.length < 2) {
+            renderPointsOnly();
+            return;
+        }
+
+        const growth = parseInt(growthSlider.value);
+        const hexColor = colorPicker.value;
+        const r = parseInt(hexColor.slice(1,3), 16), g = parseInt(hexColor.slice(3,5), 16), b = parseInt(hexColor.slice(5,7), 16);
+
+        // --- DRAW CONE ---
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacitySlider.value/10})`;
+        
+        // Upper Edge
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 0; i < points.length - 1; i++) {
+            const r1 = (i/points.length) * growth;
+            const r2 = ((i+1)/points.length) * growth;
+            const xc = (points[i].x + points[i+1].x) / 2;
+            const yc = ((points[i].y - r1) + (points[i+1].y - r2)) / 2;
+            ctx.quadraticCurveTo(points[i].x, points[i].y - r1, xc, yc);
+        }
+
+        // End Cap
+        const last = points[points.length-1];
+        ctx.arc(last.x, last.y, growth, -Math.PI/2, Math.PI/2);
+
+        // Lower Edge
+        for (let i = points.length - 1; i > 0; i--) {
+            const r1 = (i/points.length) * growth;
+            const r2 = ((i-1)/points.length) * growth;
+            const xc = (points[i].x + points[i-1].x) / 2;
+            const yc = ((points[i].y + r1) + (points[i-1].y + r2)) / 2;
+            ctx.quadraticCurveTo(points[i].x, points[i].y + r1, xc, yc);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, 0.5)`;
+        ctx.stroke();
+
+        renderPointsOnly();
+    }
+
+    function renderPointsOnly() {
+        points.forEach((p) => {
+            const color = getStormColor(p.wind);
+            
+            // Point
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = "white";
+            ctx.shadowColor = "black";
+            ctx.shadowBlur = 4;
+            
+            let labelText = "";
+            if(p.showLabel) labelText += p.label + " ";
+            if(p.date) labelText += p.date.split('-').slice(1).join('/') + " ";
+            if(p.time) labelText += p.time;
+
+            if(labelText.trim()) {
+                ctx.font = "bold 11px sans-serif";
+                ctx.fillText(labelText, p.x + 12, p.y - 4);
+                ctx.font = "10px sans-serif";
+                ctx.fillText(p.wind + " mph", p.x + 12, p.y + 10);
+            }
+            ctx.shadowBlur = 0;
+        });
+    }
+
+    canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const clickedPoint = points.find(p => Math.hypot(p.x - mx, p.y - my) < 15);
+        if(clickedPoint) { draggingPoint = clickedPoint; }
+        else if (e.button !== 2) {
+            points.push({x: mx, y: my, wind: 60, label: "", date: "", time: "", showLabel: false});
+            points.sort((a,b) => a.x - b.x);
+            updatePointUI();
+            draw();
+        }
+    };
+
+    canvas.oncontextmenu = (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left; my = e.clientY - rect.top;
+        points = points.filter(p => Math.hypot(p.x - mx, p.y - my) > 15);
+        updatePointUI();
+        draw();
+    };
+
+    window.onmousemove = (e) => {
+        if (draggingPoint) {
+            const rect = canvas.getBoundingClientRect();
+            draggingPoint.x = e.clientX - rect.left;
+            draggingPoint.y = e.clientY - rect.top;
+            draw();
+        }
+    };
+
+    window.onmouseup = () => draggingPoint = null;
+    [growthSlider, colorPicker, opacitySlider].forEach(el => el.oninput = draw);
+
+    function resetPoints() { points = []; updatePointUI(); draw(); }
+    
+    buildLegend();
+    updatePointUI();
+    draw();
+</script>
+</body>
+</html>
