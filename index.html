@@ -4,117 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Storm Studio | Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --accent: #3b82f6;
-            --bg: #030303;
-            --panel: #0d0d10;
-            --border: rgba(255, 255, 255, 0.08);
-            --card: #15151a;
-            --input-bg: #000000;
-            --text-dim: #94a3b8;
-            --radius: 14px;
+            --bg: #000000;
+            --panel: #0a0a0c;
+            --border: #1f1f23;
+            --card: #0d0d0f;
+            --input-bg: #000;
+            --text-dim: #71717a;
+            --sidebar-width: 380px;
+            --radius: 10px;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); color: #fff;
             margin: 0; display: flex; height: 100vh; overflow: hidden;
-            flex-direction: row;
         }
 
-        /* Sidebar Design */
+        /* Sidebar Layout */
         .sidebar {
-            width: 360px; background: var(--panel); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; z-index: 20; transition: transform 0.3s ease;
+            width: var(--sidebar-width); min-width: var(--sidebar-width);
+            background: var(--panel); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 50;
         }
         .sidebar-header { 
-            padding: 20px; border-bottom: 1px solid var(--border); 
+            padding: 16px 20px; border-bottom: 1px solid var(--border); 
             display: flex; justify-content: space-between; align-items: center; 
         }
-        .sidebar-header h1 { font-size: 11px; margin: 0; text-transform: uppercase; letter-spacing: 4px; color: var(--accent); font-weight: 700; }
+        .sidebar-header h1 { font-size: 10px; margin: 0; text-transform: uppercase; letter-spacing: 2px; color: #fff; font-weight: 700; }
         
-        /* Modern Tabs */
-        .tabs { display: flex; padding: 4px; background: rgba(255,255,255,0.03); margin: 16px; border-radius: 12px; }
+        .tabs { display: flex; padding: 4px; background: #000; margin: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
         .tab { 
-            flex: 1; padding: 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
-            text-align: center; cursor: pointer; color: var(--text-dim); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 10px; font-weight: 600;
+            flex: 1; padding: 8px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
+            text-align: center; cursor: pointer; color: var(--text-dim); transition: 0.2s;
+            border-radius: 6px; font-weight: 700;
         }
-        .tab.active { color: #fff; background: var(--card); box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        .tab.active { color: #fff; background: #1c1c1f; }
 
-        .tab-content { flex: 1; overflow-y: auto; padding: 0 16px 16px 16px; display: none; }
+        .tab-content { flex: 1; overflow-y: auto; padding: 0 20px 20px 20px; display: none; }
         .tab-content.active { display: block; }
         
-        .section { margin-bottom: 28px; }
-        label { font-size: 10px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1.2px; display: block; margin-bottom: 12px; font-weight: 600; }
+        .section-label { font-size: 9px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1.5px; display: block; margin: 24px 0 12px 0; font-weight: 700; }
 
-        /* Sleek Circle Sliders */
+        /* Studio Circle Sliders */
+        .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .slider-label { font-size: 11px; width: 100px; color: #fff; }
         input[type="range"] {
-            -webkit-appearance: none; width: 100%; height: 5px; background: #222; border-radius: 10px; outline: none;
+            -webkit-appearance: none; flex: 1; height: 6px; background: #1f1f23; border-radius: 10px; outline: none;
         }
         input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px; background: #fff; border-radius: 50%; cursor: pointer; 
-            border: 2px solid var(--accent); box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+            -webkit-appearance: none; width: 18px; height: 18px; background: #fff; cursor: pointer; border-radius: 50%;
+            border: 2px solid var(--accent); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Rounded Square Checkboxes & Inputs */
+        input[type="checkbox"] {
+            -webkit-appearance: none;
+            width: 16px; height: 16px; border: 1px solid var(--border);
+            border-radius: 4px; background: #000; cursor: pointer; position: relative;
+        }
+        input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+        input[type="checkbox"]:checked::after {
+            content: '✓'; color: white; position: absolute; font-size: 10px; left: 2px; top: -1px;
         }
 
         input, select {
             background: var(--input-bg); border: 1px solid var(--border); color: #fff;
-            padding: 10px 12px; border-radius: 10px; font-size: 12px; width: 100%; transition: border 0.2s;
+            padding: 8px 10px; border-radius: 8px; font-size: 12px; width: 100%; transition: 0.2s;
         }
         input:focus { border-color: var(--accent); outline: none; }
 
         /* Point Cards */
         .point-card {
             background: var(--card); border: 1px solid var(--border);
-            padding: 14px; border-radius: 16px; margin-bottom: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            padding: 12px; border-radius: 10px; margin-bottom: 8px;
         }
-        .card-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
-        .point-num { font-size: 11px; font-weight: 700; color: var(--accent); min-width: 28px; opacity: 0.8; }
+        .card-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+        .point-id { font-size: 10px; font-weight: 800; color: #3b82f6; width: 22px; }
         
-        /* Main Viewport */
-        .viewport { flex: 1; position: relative; background: #000; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-        canvas { background: #050507; }
-
-        /* Sleek Legend */
-        .legend {
-            position: absolute; bottom: 20px; right: 20px; background: rgba(10, 10, 12, 0.8);
-            padding: 16px; border-radius: 18px; border: 1px solid var(--border); backdrop-filter: blur(20px);
-            z-index: 5; font-size: 10px;
+        /* Viewport & Canvas */
+        .viewport { 
+            flex: 1; position: relative; background: #050507; overflow: hidden; 
+            display: flex; align-items: center; justify-content: center;
         }
-        .leg-item { display: flex; align-items: center; margin-bottom: 6px; gap: 10px; color: #cbd5e1; font-weight: 500; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 8px rgba(255,255,255,0.1); }
+        canvas { display: block; }
 
-        /* Buttons */
+        .legend {
+            position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8);
+            padding: 14px; border-radius: 12px; border: 1px solid var(--border); backdrop-filter: blur(10px);
+            z-index: 10; font-size: 9px;
+        }
+        .leg-item { display: flex; align-items: center; margin-bottom: 4px; gap: 8px; color: #aaa; text-transform: uppercase; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        /* Rounded Studio Buttons */
         .btn {
-            background: var(--accent); color: white; border: none; padding: 12px 16px;
-            border-radius: 12px; cursor: pointer; font-size: 11px; font-weight: 700; transition: 0.2s;
+            background: var(--accent); color: white; border: none; padding: 10px;
+            border-radius: 10px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.2s;
             text-transform: uppercase; letter-spacing: 1px; width: 100%;
         }
-        .btn-secondary { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); }
-        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
-        .btn-danger { background: #1a0b0b; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); }
+        .btn-secondary { background: #1c1c1f; color: #fff; border: 1px solid var(--border); margin-bottom: 8px; }
+        .btn-danger { background: #1a0b0b; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); margin-top: 10px; }
 
-        /* Pill Unit Toggle */
-        .unit-toggle {
-            display: flex; background: #000; border-radius: 12px; padding: 4px; border: 1px solid var(--border);
+        .pill-toggle { display: flex; background: #000; border-radius: 8px; padding: 3px; border: 1px solid var(--border); }
+        .pill { 
+            flex: 1; border: none; background: none; color: var(--text-dim); font-size: 9px; 
+            padding: 6px; cursor: pointer; border-radius: 6px; font-weight: 700; transition: 0.2s;
         }
-        .unit-pill {
-            flex: 1; border: none; background: none; color: var(--text-dim); font-size: 10px; padding: 8px;
-            cursor: pointer; border-radius: 9px; font-weight: 700; transition: 0.3s;
-        }
-        .unit-pill.active { background: var(--accent); color: white; }
+        .pill.active { background: #3b82f6; color: white; }
 
         @media (max-width: 768px) {
             body { flex-direction: column; }
-            .sidebar { width: 100%; height: 45vh; order: 2; border-right: none; border-top: 1px solid var(--border); }
-            .viewport { height: 55vh; order: 1; }
-            .legend { scale: 0.85; bottom: 10px; right: 10px; }
+            .sidebar { width: 100%; height: 45%; order: 2; border-right: none; border-top: 1px solid var(--border); }
+            .viewport { height: 55%; order: 1; }
         }
 
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -122,7 +130,7 @@
     <div class="sidebar">
         <div class="sidebar-header">
             <h1>Storm Studio</h1>
-            <button class="btn btn-secondary" style="width:auto; padding:6px 14px; font-size:9px" onclick="undo()">Undo</button>
+            <button class="btn btn-secondary" style="width:auto; padding:4px 12px; margin:0; font-size:9px; border-radius:8px;" onclick="undo()">Undo</button>
         </div>
 
         <div class="tabs">
@@ -131,59 +139,54 @@
         </div>
         
         <div id="controls" class="tab-content active">
-            <div class="section">
-                <label>Unit Intelligence</label>
-                <div class="unit-toggle" id="unitToggle">
-                    <button class="unit-pill active" onclick="setUnit('mph')">MPH</button>
-                    <button class="unit-pill" onclick="setUnit('kph')">KPH</button>
-                    <button class="unit-pill" onclick="setUnit('kt')">KT</button>
-                </div>
-                <div style="display:flex; align-items:center; gap:10px; margin-top:14px;">
-                    <input type="checkbox" id="showMultiUnit" style="width:16px; height:16px; border-radius:4px;">
-                    <span style="font-size:11px; color:var(--text-dim)">Display Dual Units</span>
-                </div>
+            <span class="section-label">Unit Settings</span>
+            <div class="pill-toggle">
+                <button class="pill active" onclick="setUnit('mph')">MPH</button>
+                <button class="pill" onclick="setUnit('kph')">KPH</button>
+                <button class="pill" onclick="setUnit('kt')">KT</button>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+                <input type="checkbox" id="showMultiUnit">
+                <span style="font-size:11px; color:var(--text-dim)">Show Dual Units</span>
             </div>
 
-            <div class="section">
-                <label>Visual Fidelity</label>
-                <div class="card-row">
-                    <span style="font-size:10px; width:90px; color:var(--text-dim)">Point Radius</span>
-                    <input type="range" id="pointSize" min="4" max="22" value="9">
+            <span class="section-label">Visual Style</span>
+            <div class="slider-row">
+                <span class="slider-label">Point Size</span>
+                <input type="range" id="pointSize" min="4" max="22" value="9">
+            </div>
+            <div class="slider-row">
+                <span class="slider-label">Text Size</span>
+                <input type="range" id="textSize" min="8" max="24" value="11">
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px">
+                <div style="display:flex; align-items:center; gap:8px">
+                    <input type="checkbox" id="pointOutline" checked>
+                    <span style="font-size:11px">Outlines</span>
                 </div>
-                <div class="card-row" style="margin-top:12px">
-                    <span style="font-size:10px; width:90px; color:var(--text-dim)">Font Weight</span>
-                    <input type="range" id="textSize" min="8" max="24" value="11">
-                </div>
-                <div class="card-row" style="margin-top:18px">
-                    <input type="checkbox" id="pointOutline" checked style="width:auto">
-                    <span style="font-size:11px">Draw Outlines</span>
-                    <input type="color" id="outlineColor" value="#ffffff" style="width:34px; height:24px; padding:0; border:none; background:none; margin-left:auto; cursor:pointer;">
-                </div>
+                <input type="color" id="outlineColor" value="#ffffff" style="width:40px; height:24px; padding:0; border:none; background:none;">
             </div>
 
-            <div class="section">
-                <label>Cone Dynamics</label>
-                <div class="card-row">
-                    <input type="color" id="coneColor" value="#ffffff" style="width:40px; height:30px; padding:0; border:none; background:none; cursor:pointer;">
-                    <input type="range" id="coneOpacity" min="1" max="10" value="3">
-                </div>
-                <div class="card-row" style="margin-top:12px">
-                    <span style="font-size:10px; width:90px; color:var(--text-dim)">Path Spread</span>
-                    <input type="range" id="coneGrowth" min="5" max="200" value="90">
-                </div>
+            <span class="section-label">Cone Dynamics</span>
+            <div class="slider-row">
+                <input type="color" id="coneColor" value="#ffffff" style="width:40px; height:30px; padding:0; border:none; background:none;">
+                <input type="range" id="coneOpacity" min="1" max="10" value="3">
+            </div>
+            <div class="slider-row">
+                <span class="slider-label">Spread</span>
+                <input type="range" id="coneGrowth" min="5" max="200" value="90">
             </div>
 
-            <div class="section">
-                <label>Map Control</label>
-                <button class="btn btn-secondary" style="margin-bottom:10px" onclick="document.getElementById('imageLoader').click()">Choose Basemap</button>
-                <input type="file" id="imageLoader" accept="image/*" style="display:none">
-                <button class="btn" onclick="confirmExport()">Export Studio PNG</button>
-            </div>
+            <span class="section-label">Track & Map</span>
+            <button class="btn btn-secondary" onclick="document.getElementById('imageLoader').click()">Upload Basemap</button>
+            <input type="file" id="imageLoader" accept="image/*" style="display:none">
+            <button class="btn" style="background:#a5f3fc; color:#000" onclick="confirmExport()">Export PNG</button>
+            
+            <button class="btn btn-danger" onclick="resetPoints()">Wipe Track Points</button>
         </div>
 
         <div id="points" class="tab-content">
             <div id="pointList"></div>
-            <button class="btn btn-danger" style="margin-top:10px;" onclick="resetPoints()">Wipe Track</button>
         </div>
     </div>
 
@@ -196,7 +199,6 @@
     const canvas = document.getElementById('stormCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Official Category Color Scheme
     const SCHEME = [
         { label: "Cat 5", min: 157, color: "#A188FC" },
         { label: "Cat 4", min: 130, color: "#FF738A" },
@@ -216,8 +218,23 @@
 
     function resizeCanvas() {
         const container = canvas.parentElement;
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
+        const availableWidth = container.clientWidth;
+        const availableHeight = container.clientHeight;
+
+        if (bgImage) {
+            const imgAspect = bgImage.width / bgImage.height;
+            const viewAspect = availableWidth / availableHeight;
+            if (viewAspect > imgAspect) {
+                canvas.height = availableHeight;
+                canvas.width = availableHeight * imgAspect;
+            } else {
+                canvas.width = availableWidth;
+                canvas.height = availableWidth / imgAspect;
+            }
+        } else {
+            canvas.width = availableWidth;
+            canvas.height = availableHeight;
+        }
         draw();
     }
     window.addEventListener('resize', resizeCanvas);
@@ -233,9 +250,7 @@
     function setUnit(unit) {
         const oldUnit = currentUnit;
         currentUnit = unit;
-        document.querySelectorAll('.unit-pill').forEach(b => {
-            b.classList.toggle('active', b.innerText.toLowerCase() === unit);
-        });
+        document.querySelectorAll('.pill').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase() === unit));
         points.forEach(p => p.wind = convertWind(p.wind, oldUnit, unit));
         updateSidebar();
         draw();
@@ -246,12 +261,10 @@
         if (from === 'mph') mph = val;
         else if (from === 'kph') mph = val / 1.60934;
         else if (from === 'kt') mph = val * 1.15078;
-
         let result;
         if (to === 'mph') result = mph;
         else if (to === 'kph') result = mph * 1.60934;
         else if (to === 'kt') result = mph / 1.15078;
-
         return Math.round(result / 5) * 5;
     }
 
@@ -260,7 +273,7 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 bgImage = new Image();
-                bgImage.onload = draw;
+                bgImage.onload = resizeCanvas;
                 bgImage.src = event.target.result;
             };
             reader.readAsDataURL(this.files[0]);
@@ -271,12 +284,11 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (bgImage) ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
         else {
-            ctx.fillStyle = "#030305"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.strokeStyle = "rgba(255,255,255,0.03)";
-            for(let i=0; i<canvas.width; i+=50) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
-            for(let i=0; i<canvas.height; i+=50) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
+            ctx.fillStyle = "#08080a"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.strokeStyle = "rgba(255,255,255,0.02)";
+            for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+            for(let i=0; i<canvas.height; i+=40) { ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(canvas.width,i); ctx.stroke(); }
         }
-
         if (points.length >= 2) renderCone();
         renderPoints();
     }
@@ -337,11 +349,11 @@
             
             if(i < points.length - 1) {
                 ctx.beginPath();
-                ctx.setLineDash([5, 5]);
+                ctx.setLineDash([4, 4]);
                 ctx.moveTo(p.x, p.y);
                 ctx.lineTo(points[i+1].x, points[i+1].y);
-                ctx.strokeStyle = "rgba(255,255,255,0.2)";
-                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = "rgba(255,255,255,0.25)";
+                ctx.lineWidth = 1;
                 ctx.stroke();
                 ctx.setLineDash([]);
             }
@@ -352,35 +364,44 @@
             ctx.fill();
             if (hasOutline) {
                 ctx.strokeStyle = oColor;
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
             }
 
             if (p.showLabel) {
-                ctx.shadowColor = "rgba(0,0,0,0.8)"; ctx.shadowBlur = 4;
-                ctx.fillStyle = "#fff";
-                ctx.font = `600 ${tSize}px Inter`;
+                // Legibility Enhancement: Halo/Outline logic
+                ctx.textAlign = "left";
+                ctx.textBaseline = "middle";
+                ctx.lineJoin = "round";
+
+                const drawTextWithHalo = (text, x, y, size, weight = "600", alpha = 1) => {
+                    ctx.font = `${weight} ${size}px Inter`;
+                    // Draw thick background halo for contrast
+                    ctx.strokeStyle = "rgba(0,0,0,0.7)";
+                    ctx.lineWidth = 4;
+                    ctx.strokeText(text, x, y);
+                    // Draw actual text
+                    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
+                    ctx.fillText(text, x, y);
+                };
                 
                 let dateStr = "";
                 if(p.date) {
-                    const parts = p.date.split('-');
-                    if(parts.length > 2) dateStr = `${parts[1]}/${parts[2]}`;
+                    const d = p.date.split('-');
+                    if(d.length === 3) dateStr = `${d[1]}/${d[2]}`;
                 }
                 let timeStr = p.time ? p.time.split(':')[0] + "z" : "";
                 
                 let header = `${p.name} ${dateStr} ${timeStr}`.trim();
-                ctx.fillText(header, p.x + pRadius + 10, p.y - 1);
+                drawTextWithHalo(header, p.x + pRadius + 8, p.y - (tSize/2), tSize, "600", 1);
                 
-                ctx.font = `500 ${tSize - 1.5}px Inter`;
-                ctx.fillStyle = "rgba(255,255,255,0.85)";
                 let windLabel = `${p.wind} ${currentUnit}`;
                 if(showMulti) {
                     const altUnit = currentUnit === 'mph' ? 'kph' : 'mph';
                     windLabel += ` / ${convertWind(p.wind, currentUnit, altUnit)} ${altUnit}`;
                 }
                 let subLabel = `${windLabel}${p.press ? ' | ' + p.press + 'mb' : ''}`;
-                ctx.fillText(subLabel, p.x + pRadius + 10, p.y + tSize + 1);
-                ctx.shadowBlur = 0;
+                drawTextWithHalo(subLabel, p.x + pRadius + 8, p.y + (tSize/2) + 2, tSize - 1, "500", 0.85);
             }
         });
     }
@@ -393,23 +414,22 @@
             div.className = 'point-card';
             div.innerHTML = `
                 <div class="card-row">
-                    <span class="point-num">#${i+1}</span>
-                    <select onchange="points[${i}].name=this.value; draw();">
-                        <option value="" ${p.name==''?'selected':''}>TYPE</option>
-                        <option value="EX" ${p.name=='EX'?'selected':''}>EX</option>
+                    <span class="point-id">#${i+1}</span>
+                    <select onchange="points[${i}].name=this.value; draw();" style="flex:2">
+                        <option value="">TYPE</option>
                         <option value="PT" ${p.name=='PT'?'selected':''}>PT</option>
+                        <option value="EX" ${p.name=='EX'?'selected':''}>EX</option>
+                        <option value="SD" ${p.name=='SD'?'selected':''}>SD</option>
                         <option value="RL" ${p.name=='RL'?'selected':''}>RL</option>
                         <option value="POST" ${p.name=='POST'?'selected':''}>POST</option>
                     </select>
-                    <input type="number" value="${p.wind}" oninput="points[${i}].wind=parseInt(this.value); draw();" placeholder="${currentUnit.toUpperCase()}">
-                    <input type="checkbox" ${p.showLabel ? 'checked' : ''} onchange="points[${i}].showLabel=this.checked; draw();" style="width:auto">
+                    <input type="number" value="${p.wind}" oninput="points[${i}].wind=parseInt(this.value); draw();" style="flex:1">
+                    <input type="checkbox" ${p.showLabel ? 'checked' : ''} onchange="points[${i}].showLabel=this.checked; draw();">
                 </div>
                 <div class="card-row">
-                    <input type="number" value="${p.press || ''}" oninput="points[${i}].press=this.value; draw();" placeholder="PRESSURE (MB)" style="flex:1">
-                </div>
-                <div class="card-row">
-                    <input type="date" value="${p.date}" oninput="points[${i}].date=this.value; draw();">
-                    <input type="time" value="${p.time}" oninput="points[${i}].time=this.value; draw();">
+                    <input type="number" value="${p.press || ''}" oninput="points[${i}].press=this.value; draw();" placeholder="mb" style="flex:1">
+                    <input type="date" value="${p.date}" oninput="points[${i}].date=this.value; draw();" style="flex:1.5">
+                    <input type="time" value="${p.time}" oninput="points[${i}].time=this.value; draw();" style="flex:1">
                 </div>
             `;
             list.appendChild(div);
@@ -458,7 +478,7 @@
 
     function confirmExport() {
         const link = document.createElement('a');
-        link.download = `Storm_Studio_Track.png`;
+        link.download = `Storm_Track.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     }
