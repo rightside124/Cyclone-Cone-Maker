@@ -23,6 +23,7 @@
             margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
+        /* Sidebar Layout */
         .sidebar {
             width: var(--sidebar-width); min-width: var(--sidebar-width);
             background: var(--panel); border-right: 1px solid var(--border);
@@ -47,6 +48,7 @@
         
         .section-label { font-size: 9px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1.5px; display: block; margin: 24px 0 12px 0; font-weight: 700; }
 
+        /* Controls Style */
         .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .slider-label { font-size: 11px; width: 100px; color: #fff; }
         input[type="range"] {
@@ -57,6 +59,7 @@
             border: 2px solid var(--accent); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
         }
 
+        /* Checkbox Fixes */
         input[type="checkbox"] {
             -webkit-appearance: none;
             width: 18px; height: 18px; border: 1px solid var(--border);
@@ -75,6 +78,7 @@
         }
         input:focus { border-color: var(--accent); outline: none; }
 
+        /* Point Cards */
         .point-card {
             background: var(--card); border: 1px solid var(--border);
             padding: 12px; border-radius: 10px; margin-bottom: 8px;
@@ -88,6 +92,7 @@
         .card-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
         .point-id { font-size: 10px; font-weight: 800; color: #3b82f6; width: 22px; pointer-events: none; }
         
+        /* Viewport & Canvas */
         .viewport { 
             flex: 1; position: relative; background: #050507; overflow: hidden; 
             display: flex; align-items: center; justify-content: center;
@@ -102,6 +107,7 @@
         .leg-item { display: flex; align-items: center; margin-bottom: 4px; gap: 8px; color: #aaa; text-transform: uppercase; }
         .dot { width: 8px; height: 8px; border-radius: 50%; }
 
+        /* Buttons */
         .btn {
             background: var(--accent); color: white; border: none; padding: 10px;
             border-radius: 10px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.2s;
@@ -150,13 +156,13 @@
         <div id="controls" class="tab-content active">
             <span class="section-label">Unit & Time Settings</span>
             <div class="pill-toggle">
-                <button class="pill active" onclick="setUnit('mph')">MPH</button>
-                <button class="pill" onclick="setUnit('kph')">KPH</button>
-                <button class="pill" onclick="setUnit('kt')">KT</button>
+                <button class="pill active" id="unit-mph" onclick="setUnit('mph')">MPH</button>
+                <button class="pill" id="unit-kph" onclick="setUnit('kph')">KPH</button>
+                <button class="pill" id="unit-kt" onclick="setUnit('kt')">KT</button>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px;">
                 <div style="display:flex; align-items:center; gap:10px;">
-                    <input type="checkbox" id="showMultiUnit">
+                    <input type="checkbox" id="showMultiUnit" onchange="draw()">
                     <span style="font-size:11px; color:var(--text-dim)">Show Dual Units</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -331,13 +337,13 @@
         saveState();
         const oldUnit = currentUnit;
         currentUnit = unit;
-        document.querySelectorAll('.pill').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase() === unit));
         points.forEach(p => p.wind = convertWind(p.wind, oldUnit, unit));
         updateSidebar();
         draw();
     }
 
     function convertWind(val, from, to) {
+        if (!val) return 0;
         let mph;
         if (from === 'mph') mph = val;
         else if (from === 'kph') mph = val / 1.60934;
@@ -358,14 +364,17 @@
     function cascadeDateTime() {
         if (points.length < 1) return;
         saveState();
-        const interval = parseInt(document.getElementById('timeInterval').value) || 6;
-        let startVal = points[0].date && points[0].time ? `${points[0].date}T${points[0].time}` : null;
-        if (!startVal) return;
-        let current = new Date(startVal);
+        const interval = parseFloat(document.getElementById('timeInterval').value) || 6;
+        let p0 = points[0];
+        
+        // Base start point
+        let startObj = (p0.date && p0.time) ? new Date(`${p0.date}T${p0.time}:00Z`) : new Date();
+        
         for(let i = 1; i < points.length; i++) {
-            current.setHours(current.getHours() + interval);
-            points[i].date = current.toISOString().split('T')[0];
-            points[i].time = current.toTimeString().slice(0,5);
+            // Force sequential forward movement using UTC to avoid DST or local glitches
+            let nextDate = new Date(startObj.getTime() + (i * interval * 60 * 60 * 1000));
+            points[i].date = nextDate.toISOString().split('T')[0];
+            points[i].time = nextDate.toISOString().split('T')[1].slice(0,5);
         }
         updateSidebar();
         draw();
@@ -389,6 +398,17 @@
     });
 
     function draw(isExport = false) {
+        // Update Unit Pill Highlights
+        const isDual = document.getElementById('showMultiUnit').checked;
+        const secondUnit = (currentUnit === 'mph') ? 'kph' : (currentUnit === 'kph' ? 'kt' : 'mph');
+        
+        document.querySelectorAll('.pill').forEach(b => {
+            const bUnit = b.id.replace('unit-', '');
+            b.classList.remove('active');
+            if (bUnit === currentUnit) b.classList.add('active');
+            if (isDual && bUnit === secondUnit) b.classList.add('active');
+        });
+
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (bgImage) {
             const scale = document.getElementById('mapScale').value / 100;
@@ -475,27 +495,29 @@
             ctx.beginPath(); ctx.arc(p.x, p.y, pRadius, 0, Math.PI*2);
             ctx.fillStyle = color; ctx.fill();
             if (hasOutline) { ctx.strokeStyle = oColor; ctx.lineWidth = 2; ctx.stroke(); }
-            if (p.showLabel) {
-                ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
-                const drawTextWithHalo = (text, x, y, size, weight = "600", alpha = 1) => {
-                    ctx.font = `${weight} ${size}px "${fontFam}", sans-serif`;
-                    ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineWidth = 4; ctx.strokeText(text, x, y);
-                    ctx.fillStyle = `rgba(255,255,255,${alpha})`; ctx.fillText(text, x, y);
-                };
-                let dateStr = "";
-                if(p.date) { const d = p.date.split('-'); if(d.length === 3) dateStr = `${d[1]}/${d[2]}`; }
-                let timeStr = p.time ? p.time.split(':')[0] + ":" + p.time.split(':')[1] + "z" : "";
-                let header = `${p.name} ${dateStr} ${timeStr}`.trim();
-                drawTextWithHalo(header, p.x + pRadius + 8, p.y - (tSize/2), tSize, "600", 1);
-                let windLabel = `${p.wind} ${currentUnit.toUpperCase()}`;
-                if(showMulti) {
-                    let secondary = (currentUnit === 'mph') ? 'KPH' : (currentUnit === 'kph' ? 'KT' : 'MPH');
-                    const secondaryVal = convertWind(p.wind, currentUnit, secondary.toLowerCase());
-                    windLabel += ` / ${secondaryVal} ${secondary}`;
-                }
-                let subLabel = `${windLabel}${p.press ? ' | ' + p.press + 'mb' : ''}`;
-                drawTextWithHalo(subLabel, p.x + pRadius + 8, p.y + (tSize/2) + 2, tSize - 1, "500", 0.85);
+            
+            // Text Label
+            ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.lineJoin = "round";
+            const drawTextWithHalo = (text, x, y, size, weight = "600", alpha = 1) => {
+                ctx.font = `${weight} ${size}px "${fontFam}", sans-serif`;
+                ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.lineWidth = 4; ctx.strokeText(text, x, y);
+                ctx.fillStyle = `rgba(255,255,255,${alpha})`; ctx.fillText(text, x, y);
+            };
+            
+            let dateStr = "";
+            if(p.date) { const d = p.date.split('-'); if(d.length === 3) dateStr = `${d[1]}/${d[2]}`; }
+            let timeStr = p.time ? p.time.split(':')[0] + "z" : "";
+            let header = `${p.name} ${dateStr} ${timeStr}`.trim();
+            drawTextWithHalo(header, p.x + pRadius + 8, p.y - (tSize/2), tSize, "600", 1);
+            
+            let windLabel = `${p.wind || 0} ${currentUnit.toUpperCase()}`;
+            if(showMulti) {
+                let secondary = (currentUnit === 'mph') ? 'KPH' : (currentUnit === 'kph' ? 'KT' : 'MPH');
+                const secondaryVal = convertWind(p.wind, currentUnit, secondary.toLowerCase());
+                windLabel += ` / ${secondaryVal} ${secondary}`;
             }
+            let subLabel = `${windLabel}${p.press ? ' | ' + p.press + 'mb' : ''}`;
+            drawTextWithHalo(subLabel, p.x + pRadius + 8, p.y + (tSize/2) + 2, tSize - 1, "500", 0.85);
         });
         if (highlightedPointIndex !== -1) requestAnimationFrame(() => draw());
     }
@@ -525,10 +547,18 @@
                     highlightedPointIndex = i; updateSidebar(); draw();
                 }
             };
+
+            // Formatting date to MM/DD for display
+            let displayDate = "";
+            if (p.date) {
+                const parts = p.date.split('-');
+                if (parts.length === 3) displayDate = `${parts[1]}/${parts[2]}`;
+            }
+
             div.innerHTML = `
                 <div class="card-row">
                     <span class="point-id">#${i+1}</span>
-                    <select onchange="saveState(); points[${i}].name=this.value; draw();" style="flex:2">
+                    <select onchange="saveState(); points[${i}].name=this.value; draw();" style="flex:1.5">
                         <option value="">TYPE</option>
                         <option value="HU" ${p.name=='HU'?'selected':''}>HU</option>
                         <option value="TS" ${p.name=='TS'?'selected':''}>TS</option>
@@ -539,17 +569,35 @@
                         <option value="RL" ${p.name=='RL'?'selected':''}>RL</option>
                         <option value="POST" ${p.name=='POST'?'selected':''}>POST</option>
                     </select>
-                    <input type="number" value="${p.wind}" oninput="saveState(); points[${i}].wind=parseInt(this.value); draw();" style="flex:1">
-                    <input type="checkbox" ${p.showLabel ? 'checked' : ''} onchange="saveState(); points[${i}].showLabel=this.checked; draw();">
+                    <input type="number" value="${p.wind === 0 ? '' : p.wind}" placeholder="Wind" oninput="saveState(); points[${i}].wind=parseInt(this.value)||0; draw();" style="flex:1">
+                    <input type="number" value="${p.press || ''}" oninput="saveState(); points[${i}].press=this.value; draw();" placeholder="mb" style="flex:1">
                 </div>
                 <div class="card-row">
-                    <input type="number" value="${p.press || ''}" oninput="saveState(); points[${i}].press=this.value; draw();" placeholder="mb" style="flex:1">
-                    <input type="date" value="${p.date}" oninput="saveState(); points[${i}].date=this.value; if(${i}===0) cascadeDateTime(); else draw();" style="flex:1.5">
-                    <input type="time" value="${p.time}" oninput="saveState(); points[${i}].time=this.value; if(${i}===0) cascadeDateTime(); else draw();" style="flex:1">
+                    <div style="flex:1.2; display:flex; flex-direction:column; gap:2px;">
+                         <span style="font-size:8px; color:var(--text-dim); text-transform:uppercase;">Date (MM/DD)</span>
+                         <input type="text" value="${displayDate}" placeholder="MM/DD" onchange="handleManualDateEntry(${i}, this.value)" style="font-size:11px;">
+                    </div>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                         <span style="font-size:8px; color:var(--text-dim); text-transform:uppercase;">Time (24h)</span>
+                         <input type="time" value="${p.time}" oninput="saveState(); points[${i}].time=this.value; if(${i}===0) cascadeDateTime(); else draw();">
+                    </div>
                 </div>
             `;
             list.appendChild(div);
         });
+    }
+
+    function handleManualDateEntry(index, val) {
+        saveState();
+        const parts = val.split('/');
+        if (parts.length === 2) {
+            const year = new Date().getFullYear();
+            points[index].date = `${year}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`;
+        } else if (!val) {
+            points[index].date = "";
+        }
+        if (index === 0) cascadeDateTime();
+        else draw();
     }
 
     const getCoords = (e) => {
@@ -566,14 +614,20 @@
         if(hitIndex !== -1) {
             saveState(); draggingPoint = points[hitIndex]; highlightedPointIndex = hitIndex; updateSidebar();
         } else if(e.button !== 2) {
-            saveState(); let newDate = new Date().toISOString().split('T')[0], newTime = "18:00";
+            saveState(); 
+            let newDate = ""; 
+            let newTime = "18:00";
+            
             if (points.length > 0) {
-                const last = points[points.length-1], interval = parseInt(document.getElementById('timeInterval').value) || 6;
-                const prevDate = new Date(`${last.date}T${last.time}`);
-                prevDate.setHours(prevDate.getHours() + interval);
-                newDate = prevDate.toISOString().split('T')[0]; newTime = prevDate.toTimeString().slice(0,5);
+                const last = points[points.length-1];
+                const interval = parseFloat(document.getElementById('timeInterval').value) || 6;
+                const prevDateObj = new Date(`${last.date || new Date().toISOString().split('T')[0]}T${last.time}:00Z`);
+                const nextDateObj = new Date(prevDateObj.getTime() + (interval * 60 * 60 * 1000));
+                newDate = nextDateObj.toISOString().split('T')[0];
+                newTime = nextDateObj.toISOString().split('T')[1].slice(0,5);
             }
-            points.push({ x, y, wind: 75, name: "", date: newDate, time: newTime, showLabel: true, press: "" });
+            
+            points.push({ x, y, wind: 0, name: "", date: newDate, time: newTime, showLabel: true, press: "" });
             highlightedPointIndex = points.length - 1; updateSidebar(); draw();
         }
     });
@@ -595,8 +649,7 @@
         if (e.shiftKey) {
             e.preventDefault();
             const scaleInput = document.getElementById('mapScale');
-            // Increased sensitivity: multiplier of 8 per notch instead of 2
-            const delta = e.deltaY > 0 ? -8 : 8;
+            const delta = e.deltaY > 0 ? -12 : 12;
             let newVal = parseInt(scaleInput.value) + delta;
             if (newVal < 100) newVal = 100;
             if (newVal > 1000) newVal = 1000;
