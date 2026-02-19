@@ -17,7 +17,7 @@
             --sidebar-width: 380px;
             --radius: 10px;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         body { 
             font-family: 'Inter', sans-serif; background: var(--bg); color: #fff;
             margin: 0; display: flex; height: 100vh; overflow: hidden;
@@ -29,13 +29,19 @@
             background: var(--panel); border-right: 1px solid var(--border);
             display: flex; flex-direction: column; z-index: 50;
         }
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; min-width: 100%; position: absolute; left: 0; top: 0; height: 40%; border-right: none; border-bottom: 1px solid var(--border); }
+            body { flex-direction: column-reverse; }
+            .viewport { height: 60%; width: 100%; }
+        }
+
         .sidebar-header { 
             padding: 16px 20px; border-bottom: 1px solid var(--border); 
             display: flex; justify-content: space-between; align-items: center; 
         }
         .sidebar-header h1 { font-size: 10px; margin: 0; text-transform: uppercase; letter-spacing: 2px; color: #fff; font-weight: 700; }
         
-        .tabs { display: flex; padding: 4px; background: #000; margin: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
+        .tabs { display: flex; padding: 4px; background: #000; margin: 16px; border-radius: var(--radius); border: 1px solid var(--border); flex-shrink: 0; }
         .tab { 
             flex: 1; padding: 8px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px;
             text-align: center; cursor: pointer; color: var(--text-dim); transition: 0.2s;
@@ -43,98 +49,47 @@
         }
         .tab.active { color: #fff; background: #1c1c1f; }
 
-        .tab-content { flex: 1; overflow-y: auto; padding: 0 20px 20px 20px; display: none; }
+        .tab-content { flex: 1; overflow-y: auto; padding: 0 20px 20px 20px; display: none; -webkit-overflow-scrolling: touch; }
         .tab-content.active { display: block; }
         
         .section-label { font-size: 9px; text-transform: uppercase; color: var(--text-dim); letter-spacing: 1.5px; display: block; margin: 24px 0 12px 0; font-weight: 700; }
 
-        /* Controls Style */
         .slider-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .slider-label { font-size: 11px; width: 100px; color: #fff; }
-        input[type="range"] {
-            -webkit-appearance: none; flex: 1; height: 6px; background: #1f1f23; border-radius: 10px; outline: none;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 18px; height: 18px; background: #fff; cursor: pointer; border-radius: 50%;
-            border: 2px solid var(--accent); box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
-        }
+        input[type="range"] { -webkit-appearance: none; flex: 1; height: 6px; background: #1f1f23; border-radius: 10px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #fff; cursor: pointer; border-radius: 50%; border: 2px solid var(--accent); }
 
-        /* Checkbox Fixes */
         input[type="checkbox"] {
-            -webkit-appearance: none;
-            width: 18px; height: 18px; border: 1px solid var(--border);
-            border-radius: 4px; background: #000; cursor: pointer; position: relative;
-            flex-shrink: 0;
+            -webkit-appearance: none; width: 18px; height: 18px; border: 1px solid var(--border);
+            border-radius: 4px; background: #000; cursor: pointer; position: relative; flex-shrink: 0;
         }
         input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
-        input[type="checkbox"]:checked::after {
-            content: '✓'; color: white; position: absolute; font-size: 11px; font-weight: 900;
-            left: 50%; top: 50%; transform: translate(-50%, -50%);
-        }
+        input[type="checkbox"]:checked::after { content: '✓'; color: white; position: absolute; font-size: 11px; font-weight: 900; left: 50%; top: 50%; transform: translate(-50%, -50%); }
 
-        input, select {
-            background: var(--input-bg); border: 1px solid var(--border); color: #fff;
-            padding: 8px 10px; border-radius: 8px; font-size: 12px; width: 100%; transition: 0.2s;
-        }
-        input:focus { border-color: var(--accent); outline: none; }
+        input, select { background: var(--input-bg); border: 1px solid var(--border); color: #fff; padding: 8px 10px; border-radius: 8px; font-size: 12px; width: 100%; }
 
-        /* Point Cards */
-        .point-card {
-            background: var(--card); border: 1px solid var(--border);
-            padding: 12px; border-radius: 10px; margin-bottom: 8px;
-            transition: border-color 0.3s;
-            cursor: pointer;
-        }
-        .point-card.highlighted {
-            border-color: var(--accent);
-            background: #0f172a;
-        }
+        .point-card { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+        .point-card.highlighted { border-color: var(--accent); background: #0f172a; }
         .card-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
-        .point-id { font-size: 10px; font-weight: 800; color: #3b82f6; width: 22px; pointer-events: none; }
+        .point-id { font-size: 10px; font-weight: 800; color: #3b82f6; width: 22px; }
         
-        /* Viewport & Canvas */
-        .viewport { 
-            flex: 1; position: relative; background: #050507; overflow: hidden; 
-            display: flex; align-items: center; justify-content: center;
-        }
-        canvas { display: block; cursor: crosshair; }
+        .viewport { flex: 1; position: relative; background: #050507; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        canvas { display: block; cursor: crosshair; max-width: 100%; max-height: 100%; }
 
-        .legend {
-            position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8);
-            padding: 14px; border-radius: 12px; border: 1px solid var(--border); backdrop-filter: blur(10px);
-            z-index: 10; font-size: 9px; pointer-events: none;
-        }
+        .legend { position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 12px; border: 1px solid var(--border); backdrop-filter: blur(10px); z-index: 10; font-size: 9px; pointer-events: none; }
+        @media (max-width: 600px) { .legend { bottom: 10px; right: 10px; padding: 6px; } }
         .leg-item { display: flex; align-items: center; margin-bottom: 4px; gap: 8px; color: #aaa; text-transform: uppercase; }
         .dot { width: 8px; height: 8px; border-radius: 50%; }
 
-        /* Buttons */
-        .btn {
-            background: var(--accent); color: white; border: none; padding: 10px;
-            border-radius: 10px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.2s;
-            text-transform: uppercase; letter-spacing: 1px; width: 100%;
-        }
+        .btn { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 10px; cursor: pointer; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; width: 100%; }
         .btn-secondary { background: #1c1c1f; color: #fff; border: 1px solid var(--border); margin-bottom: 8px; }
         .btn-danger { background: #1a0b0b; color: #ff5555; border: 1px solid rgba(255,85,85,0.2); margin-top: 10px; }
 
         .pill-toggle { display: flex; background: #000; border-radius: 8px; padding: 3px; border: 1px solid var(--border); }
-        .pill { 
-            flex: 1; border: none; background: none; color: var(--text-dim); font-size: 9px; 
-            padding: 6px; cursor: pointer; border-radius: 6px; font-weight: 700; transition: 0.2s;
-        }
+        .pill { flex: 1; border: none; background: none; color: var(--text-dim); font-size: 9px; padding: 6px; cursor: pointer; border-radius: 6px; font-weight: 700; }
         .pill.active { background: #3b82f6; color: white; }
 
-        #basemapAdjustments {
-            display: none;
-            margin-top: 10px;
-            padding: 12px;
-            background: #000;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-        }
+        #basemapAdjustments { display: none; margin-top: 10px; padding: 12px; background: #000; border-radius: 8px; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
@@ -262,11 +217,14 @@
     <div class="viewport">
         <canvas id="stormCanvas"></canvas>
         <div class="legend" id="legend"></div>
+        <div style="position:absolute; top:10px; left:10px; font-size:9px; color:var(--text-dim); pointer-events:none; background:rgba(0,0,0,0.5); padding:4px 8px; border-radius:4px; max-width: 80%;">
+            Shift+Wheel: Zoom | Shift+Drag: Map | Alt+Drag: Track
+        </div>
     </div>
 
 <script>
     const canvas = document.getElementById('stormCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false }); // Optimization: disable alpha for main context
     
     const SCHEME = [
         { label: "Cat 5", min: 157, color: "#A188FC" },
@@ -290,9 +248,10 @@
     let highlightedPointIndex = -1;
 
     let isMapDragging = false;
+    let isTrackDragging = false;
     let lastMousePos = { x: 0, y: 0 };
+    let needsDraw = false;
 
-    // --- FOLDER CONFIG ---
     const HIRES_SOURCES = { 
         nw: 'resources/map_hi-res_NW.jpg', 
         ne: 'resources/map_hi-res_NE.jpg', 
@@ -300,6 +259,19 @@
         se: 'resources/map_hi-res_SE.jpg' 
     };
     const REGULAR_SOURCE = 'resources/map_regular.jpg';
+
+    // Optimization: Request Animation Frame for smoother rendering
+    function draw() {
+        if (!needsDraw) {
+            needsDraw = true;
+            requestAnimationFrame(renderLoop);
+        }
+    }
+
+    function renderLoop() {
+        renderInternal();
+        needsDraw = false;
+    }
 
     function handleMapSourceChange() {
         const val = document.getElementById('mapSource').value;
@@ -357,6 +329,17 @@
         if (e.ctrlKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); }
         if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     });
+
+    canvas.addEventListener('wheel', (e) => {
+        if (e.shiftKey) {
+            e.preventDefault();
+            const scaleInput = document.getElementById('mapScale');
+            let currentScale = parseInt(scaleInput.value);
+            const delta = e.deltaY > 0 ? -5 : 5;
+            scaleInput.value = Math.max(10, Math.min(1000, currentScale + delta));
+            draw();
+        }
+    }, { passive: false });
 
     function resizeCanvas() {
         const container = canvas.parentElement;
@@ -429,7 +412,7 @@
         }
     });
 
-    function draw(isExport = false) {
+    function renderInternal(isExport = false) {
         const isDual = document.getElementById('showMultiUnit').checked;
         const secondUnit = (currentUnit === 'mph') ? 'kph' : (currentUnit === 'kph' ? 'kt' : 'mph');
         document.querySelectorAll('.pill').forEach(b => {
@@ -439,7 +422,10 @@
             if (isDual && bUnit === secondUnit) b.classList.add('active');
         });
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Optimization: FillRect instead of ClearRect for performance on some mobile browsers when using non-alpha context
+        ctx.fillStyle = "#050507";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
         const mapType = document.getElementById('mapSource').value;
         const scale = document.getElementById('mapScale').value / 100;
         const ox = parseInt(document.getElementById('mapX').value);
@@ -457,8 +443,6 @@
         } else if (bgImage) {
             const sw = bgImage.width * scale; const sh = bgImage.height * scale;
             ctx.drawImage(bgImage, (canvas.width/2 - sw/2) + ox, (canvas.height/2 - sh/2) + oy, sw, sh);
-        } else {
-            ctx.fillStyle = "#08080a"; ctx.fillRect(0,0,canvas.width, canvas.height);
         }
 
         if (points.length >= 2) renderCone();
@@ -602,7 +586,7 @@
                          <input type="text" value="${displayDate}" placeholder="MM/DD" onchange="handleManualDateEntry(${i}, this.value)">
                     </div>
                     <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
-                         <input type="time" value="${p.time}" oninput="saveState(); points[${i}].time=this.value; if(${i}===0) cascadeDateTime(); else draw();">
+                         <input type="time" value="${p.time}" step="60" oninput="saveState(); points[${i}].time=this.value; if(${i}===0) cascadeDateTime(); else draw();">
                     </div>
                 </div>
             `;
@@ -622,18 +606,22 @@
 
     const getCoords = (e) => {
         const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+        const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
         return { x: clientX - rect.left, y: clientY - rect.top };
     };
 
-    canvas.addEventListener('mousedown', (e) => {
+    function handleStart(e) {
         const {x, y} = getCoords(e); lastMousePos = {x, y};
         if (e.shiftKey) { isMapDragging = true; return; }
-        const hitIndex = points.findIndex(p => Math.hypot(p.x-x, p.y-y) < 20);
+        if (e.altKey) { saveState(); isTrackDragging = true; return; }
+
+        // Touch Optimization: slightly larger hit radius (30px) for fingers
+        const hitIndex = points.findIndex(p => Math.hypot(p.x-x, p.y-y) < 30);
         if(hitIndex !== -1) {
             saveState(); draggingPoint = points[hitIndex]; highlightedPointIndex = hitIndex; updateSidebar();
-        } else if(e.button !== 2) {
+        } else if(!e.touches || e.touches.length === 1) { // Prevents accidental points on multi-touch zoom
+            if (e.button === 2) return;
             saveState(); 
             let newDate = ""; let newTime = "18:00";
             if (points.length > 0) {
@@ -647,20 +635,35 @@
             points.push({ x, y, wind: 0, name: "", date: newDate, time: newTime, press: "" });
             highlightedPointIndex = points.length - 1; updateSidebar(); draw();
         }
-    });
+    }
 
-    window.addEventListener('mousemove', (e) => {
+    function handleMove(e) {
+        if (e.touches && e.touches.length > 1) return; // Ignore multi-touch move
         const {x, y} = getCoords(e); const dx = x - lastMousePos.x, dy = y - lastMousePos.y;
+        
         if (isMapDragging) {
             const mapX = document.getElementById('mapX'), mapY = document.getElementById('mapY');
             mapX.value = parseInt(mapX.value) + dx; mapY.value = parseInt(mapY.value) + dy; draw();
+        } else if (isTrackDragging) {
+            points.forEach(p => { p.x += dx; p.y += dy; });
+            draw();
         } else if(draggingPoint) {
             draggingPoint.x = x; draggingPoint.y = y; draw();
         }
         lastMousePos = {x, y};
-    });
+    }
 
-    window.addEventListener('mouseup', () => { draggingPoint = null; isMapDragging = false; });
+    function handleEnd() { draggingPoint = null; isMapDragging = false; isTrackDragging = false; }
+
+    canvas.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+
+    // Mobile specific events
+    canvas.addEventListener('touchstart', (e) => { if(e.cancelable) e.preventDefault(); handleStart(e); }, {passive: false});
+    window.addEventListener('touchmove', (e) => { if(e.cancelable) e.preventDefault(); handleMove(e); }, {passive: false});
+    window.addEventListener('touchend', handleEnd);
+
     canvas.oncontextmenu = (e) => {
         e.preventDefault(); saveState(); const {x, y} = getCoords(e);
         points = points.filter(p => Math.hypot(p.x-x, p.y-y) > 20);
@@ -673,7 +676,7 @@
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
     function confirmExport() {
-        draw(true); setTimeout(() => {
+        renderInternal(true); setTimeout(() => {
             const link = document.createElement('a'); link.download = `Storm_Track.png`;
             link.href = canvas.toDataURL('image/png'); link.click(); draw();
         }, 100);
