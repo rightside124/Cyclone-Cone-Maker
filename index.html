@@ -224,7 +224,7 @@
 
 <script>
     const canvas = document.getElementById('stormCanvas');
-    const ctx = canvas.getContext('2d', { alpha: false }); // Optimization: disable alpha for main context
+    const ctx = canvas.getContext('2d', { alpha: false });
     
     const SCHEME = [
         { label: "Cat 5", min: 157, color: "#A188FC" },
@@ -260,7 +260,6 @@
     };
     const REGULAR_SOURCE = 'resources/map_regular.jpg';
 
-    // Optimization: Request Animation Frame for smoother rendering
     function draw() {
         if (!needsDraw) {
             needsDraw = true;
@@ -330,13 +329,49 @@
         if (e.ctrlKey && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     });
 
+    // Smart Cursor-Centric Zooming
     canvas.addEventListener('wheel', (e) => {
         if (e.shiftKey) {
             e.preventDefault();
+            const {x, y} = getCoords(e);
+            
             const scaleInput = document.getElementById('mapScale');
-            let currentScale = parseInt(scaleInput.value);
-            const delta = e.deltaY > 0 ? -5 : 5;
-            scaleInput.value = Math.max(10, Math.min(1000, currentScale + delta));
+            const oldScaleVal = parseInt(scaleInput.value);
+            
+            // Adjust zoom sensitivity
+            const delta = e.deltaY > 0 ? -15 : 15;
+            const newScaleVal = Math.max(10, Math.min(1000, oldScaleVal + delta));
+            
+            if (oldScaleVal === newScaleVal) return;
+
+            const mapXInput = document.getElementById('mapX');
+            const mapYInput = document.getElementById('mapY');
+            const ox = parseInt(mapXInput.value);
+            const oy = parseInt(mapYInput.value);
+
+            // Calculate pivot relative to center
+            const pivotX = x - canvas.width / 2;
+            const pivotY = y - canvas.height / 2;
+
+            // Difference factor
+            const ratio = newScaleVal / oldScaleVal;
+
+            // Adjust offset and points to zoom toward cursor
+            const newOx = pivotX - (pivotX - ox) * ratio;
+            const newOy = pivotY - (pivotY - oy) * ratio;
+
+            mapXInput.value = Math.round(newOx);
+            mapYInput.value = Math.round(newOy);
+            scaleInput.value = newScaleVal;
+
+            // Scale track points relative to center pivot as well
+            points.forEach(p => {
+                const px = p.x - canvas.width / 2;
+                const py = p.y - canvas.height / 2;
+                p.x = (pivotX + (px - pivotX) * ratio) + canvas.width / 2;
+                p.y = (pivotY + (py - pivotY) * ratio) + canvas.height / 2;
+            });
+
             draw();
         }
     }, { passive: false });
@@ -422,12 +457,12 @@
             if (isDual && bUnit === secondUnit) b.classList.add('active');
         });
 
-        // Optimization: FillRect instead of ClearRect for performance on some mobile browsers when using non-alpha context
         ctx.fillStyle = "#050507";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         const mapType = document.getElementById('mapSource').value;
-        const scale = document.getElementById('mapScale').value / 100;
+        const scaleVal = document.getElementById('mapScale').value;
+        const scale = scaleVal / 100;
         const ox = parseInt(document.getElementById('mapX').value);
         const oy = parseInt(document.getElementById('mapY').value);
 
@@ -616,11 +651,10 @@
         if (e.shiftKey) { isMapDragging = true; return; }
         if (e.altKey) { saveState(); isTrackDragging = true; return; }
 
-        // Touch Optimization: slightly larger hit radius (30px) for fingers
         const hitIndex = points.findIndex(p => Math.hypot(p.x-x, p.y-y) < 30);
         if(hitIndex !== -1) {
             saveState(); draggingPoint = points[hitIndex]; highlightedPointIndex = hitIndex; updateSidebar();
-        } else if(!e.touches || e.touches.length === 1) { // Prevents accidental points on multi-touch zoom
+        } else if(!e.touches || e.touches.length === 1) {
             if (e.button === 2) return;
             saveState(); 
             let newDate = ""; let newTime = "18:00";
@@ -638,7 +672,7 @@
     }
 
     function handleMove(e) {
-        if (e.touches && e.touches.length > 1) return; // Ignore multi-touch move
+        if (e.touches && e.touches.length > 1) return;
         const {x, y} = getCoords(e); const dx = x - lastMousePos.x, dy = y - lastMousePos.y;
         
         if (isMapDragging) {
@@ -659,7 +693,6 @@
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('mouseup', handleEnd);
 
-    // Mobile specific events
     canvas.addEventListener('touchstart', (e) => { if(e.cancelable) e.preventDefault(); handleStart(e); }, {passive: false});
     window.addEventListener('touchmove', (e) => { if(e.cancelable) e.preventDefault(); handleMove(e); }, {passive: false});
     window.addEventListener('touchend', handleEnd);
